@@ -95,6 +95,7 @@ export default function Footer() {
                     {t('nav.store')}
                   </Link>
                 </li>
+               
                 <li>
                   <Link 
                     to="/about" 
@@ -103,14 +104,16 @@ export default function Footer() {
                     {t('nav.about')}
                   </Link>
                 </li>
-                <li>
+
+                {/* <li>
                   <a 
                     href="#contact" 
                     className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors duration-500 flex items-center gap-2"
                   >
                     {t('nav.contact')}
                   </a>
-                </li>
+                </li> */}
+
               </ul>
             </div>
 
