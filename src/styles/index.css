@@ -1,0 +1,119 @@
+@import './fonts.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Glassmorphism Effects */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-dark {
+    background: rgba(30, 42, 69, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(217, 172, 63, 0.1);
+  }
+
+  /* 3D Card Effect */
+  .perspective-container {
+    perspective: 1000px;
+  }
+
+  .card-3d {
+    @apply transition-transform duration-[1500ms];
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform-style: preserve-3d;
+  }
+
+  .card-3d:hover {
+    transform: rotateY(3deg) rotateX(2deg);
+  }
+
+  /* Pattern Overlay */
+  .pattern-overlay {
+    background-image: radial-gradient(#d9ac3f 1px, transparent 1px);
+    background-size: 40px 40px;
+    @apply opacity-10;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary rounded;
+}
+
+/* RTL/LTR Font Handling */
+[dir="rtl"] {
+  font-family: "IBM Plex Sans Arabic", sans-serif;
+}
+
+[dir="ltr"] {
+  font-family: "Outfit", sans-serif;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base Body Styles */
+body {
+  @apply font-display bg-background-light dark:bg-background-dark text-gray-800 dark:text-white;
+  @apply transition-colors duration-300 min-h-screen relative overflow-x-hidden;
+  @apply selection:bg-primary selection:text-white;
+}
+
+/* Pulse Animation for Background Orbs */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+/* Disable animations on mobile for performance */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+
+  .card-3d,
+  .card-3d:hover {
+    transform: none !important;
+  }
+
+  .hero-letter {
+    display: none;
+  }
+
+  .hero-media {
+    overflow: hidden;
+  }
+}
+
+/* Hero Image Mask */
+.mask-image-gradient {
+  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}

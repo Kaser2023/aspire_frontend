@@ -1,0 +1,10 @@
+export { default as DashboardHome } from './DashboardHome'
+export { default as MyChildren } from './MyChildren'
+export { default as DashboardPrograms } from './DashboardPrograms'
+export { default as Schedule } from './Schedule'
+export { default as Attendance } from './Attendance'
+export { default as Performance } from './Performance'
+export { default as Payments } from './Payments'
+export { default as Notifications } from './Notifications'
+export { default as Settings } from './Settings'
+
