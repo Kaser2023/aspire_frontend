@@ -238,7 +238,7 @@ export default function MyPlayers() {
                       <div className="flex items-start gap-4">
                         {player.avatar ? (
                           <img 
-                            src={player.avatar.startsWith('http') ? player.avatar : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${player.avatar}`} 
+                            src={player.avatar.startsWith('http') ? player.avatar : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')}${player.avatar}`} 
                             alt={player.name?.[language]}
                             className="w-14 h-14 rounded-2xl object-cover"
                             onError={(e) => { e.target.style.display = 'none'; e.target.nextElementSibling && (e.target.nextElementSibling.style.display = 'flex') }}

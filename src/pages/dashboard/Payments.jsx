@@ -312,7 +312,7 @@ export default function Payments() {
                       <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center overflow-hidden">
                         {child.avatar ? (
                           <img 
-                            src={child.avatar.startsWith('http') ? child.avatar : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${child.avatar}`} 
+                            src={child.avatar.startsWith('http') ? child.avatar : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')}${child.avatar}`} 
                             alt={child.name?.[language]} 
                             className="w-full h-full object-cover"
                             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}

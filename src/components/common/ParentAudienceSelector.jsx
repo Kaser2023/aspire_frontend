@@ -313,7 +313,7 @@ const ParentAudienceSelector = ({ value, onChange }) => {
                               />
                               <div className="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-xs font-medium text-teal-600 dark:text-teal-400 flex-shrink-0">
                                 {parent.avatar ? (
-                                  <img src={parent.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                  <img src={parent.avatar.startsWith('http') ? parent.avatar : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')}${parent.avatar}`} alt="" className="w-full h-full rounded-full object-cover" />
                                 ) : (
                                   parent.name?.charAt(0) || '?'
                                 )}

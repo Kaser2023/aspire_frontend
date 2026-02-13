@@ -399,7 +399,7 @@ const AudienceSelector = ({ value, onChange }) => {
                                 />
                                 <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium">
                                   {user.avatar ? (
-                                    <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                    <img src={user.avatar.startsWith('http') ? user.avatar : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')}${user.avatar}`} alt="" className="w-full h-full rounded-full object-cover" />
                                   ) : (
                                     user.name?.charAt(0) || '?'
                                   )}

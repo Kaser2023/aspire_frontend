@@ -7,6 +7,7 @@ import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const FILE_BASE_URL = API_URL.replace(/\/api\/?$/, '')
 
 // Map frontend tab to backend role
 const TAB_TO_ROLE = {
@@ -531,12 +532,12 @@ export default function Users() {
         gender: user.gender || 'male',
         idType: 'national_id',
         idDocument: null,
-        idDocumentPreview: user.idDocument ? `${API_URL.replace('/api', '')}${user.idDocument}` : null,
+        idDocumentPreview: user.idDocument ? `${FILE_BASE_URL}${user.idDocument}` : null,
         healthNotes: user.healthNotes || user.medical_notes || '',
         nationality: user.nationality || '',
         address: user.address || '',
         avatar: null,
-        avatarPreview: user.avatar ? `${API_URL.replace('/api', '')}${user.avatar}` : null,
+        avatarPreview: user.avatar ? `${FILE_BASE_URL}${user.avatar}` : null,
         // Keep other fields for compatibility
         name: '',
         nameAr: '',
@@ -583,7 +584,7 @@ export default function Users() {
         parentId: '',
         gender: 'male',
         avatar: null,
-        avatarPreview: user.avatar ? `${API_URL.replace('/api', '')}${user.avatar}` : null
+        avatarPreview: user.avatar ? `${FILE_BASE_URL}${user.avatar}` : null
       })
     }
     
@@ -1694,7 +1695,7 @@ export default function Users() {
             <div className="flex items-center gap-4 flex-1">
               {user.avatar ? (
                 <img 
-                  src={`${API_URL.replace('/api', '')}${user.avatar}`} 
+                  src={`${FILE_BASE_URL}${user.avatar}`} 
                   alt={user.name.en} 
                   className="w-10 h-10 rounded-full object-cover"
                   onError={(e) => {
@@ -1774,7 +1775,7 @@ export default function Users() {
             <div className="flex items-start gap-3">
               {user.avatar ? (
                 <img 
-                  src={`${API_URL.replace('/api', '')}${user.avatar}`} 
+                  src={`${FILE_BASE_URL}${user.avatar}`} 
                   alt={user.name.en} 
                   className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                   onError={(e) => {
@@ -1957,7 +1958,7 @@ export default function Users() {
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-sm font-bold overflow-hidden">
                     {player.avatar ? (
                       <img 
-                        src={`${API_URL.replace('/api', '')}${player.avatar}`} 
+                        src={`${FILE_BASE_URL}${player.avatar}`} 
                         alt={player.name?.[language]} 
                         className="w-full h-full object-cover"
                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
@@ -1973,7 +1974,7 @@ export default function Users() {
               <td className="px-6 py-4">
                 {player.idDocument ? (
                   <a 
-                    href={`${API_URL.replace('/api', '')}${player.idDocument}`} 
+                    href={`${FILE_BASE_URL}${player.idDocument}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors"
@@ -2034,7 +2035,7 @@ export default function Users() {
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 overflow-hidden">
                 {player.avatar ? (
                   <img 
-                    src={`${API_URL.replace('/api', '')}${player.avatar}`} 
+                    src={`${FILE_BASE_URL}${player.avatar}`} 
                     alt={player.name?.[language]} 
                     className="w-full h-full object-cover"
                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
@@ -2081,7 +2082,7 @@ export default function Users() {
                   )}
                   {player.idDocument && (
                     <a
-                      href={`${API_URL.replace('/api', '')}${player.idDocument}`}
+                      href={`${FILE_BASE_URL}${player.idDocument}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-2 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors"
@@ -2140,7 +2141,7 @@ export default function Users() {
                 <div className="flex items-center gap-3">
                   {acc.avatar ? (
                     <img
-                      src={`${API_URL.replace('/api', '')}${acc.avatar}`}
+                      src={`${FILE_BASE_URL}${acc.avatar}`}
                       alt={acc.name?.en || 'User'}
                       className="w-9 h-9 rounded-full object-cover"
                     />
@@ -2210,7 +2211,7 @@ export default function Users() {
             <div className="flex items-start gap-3">
               {acc.avatar ? (
                 <img
-                  src={`${API_URL.replace('/api', '')}${acc.avatar}`}
+                  src={`${FILE_BASE_URL}${acc.avatar}`}
                   alt={acc.name?.en || 'User'}
                   className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                 />

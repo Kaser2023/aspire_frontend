@@ -125,7 +125,8 @@ export default function Staff() {
   const getAvatarUrl = (avatar) => {
     if (!avatar) return null
     if (avatar.startsWith('http')) return avatar
-    return `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${avatar}`
+    const fileBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
+    return `${fileBase}${avatar}`
   }
 
   const filterStaff = (staffList) => {

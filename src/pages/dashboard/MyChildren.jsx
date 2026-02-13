@@ -5,8 +5,7 @@ import { playersService, attendanceService, evaluationService, branchesService }
 import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-const BASE_URL = API_URL.replace('/api', '')
+const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
 
 export default function MyChildren() {
   const { language } = useLanguage()

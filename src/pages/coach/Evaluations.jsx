@@ -552,7 +552,7 @@ export default function Evaluations() {
                         <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center text-white text-sm font-bold mx-auto mb-2 overflow-hidden">
                           {player.avatar ? (
                             <img 
-                              src={player.avatar.startsWith('http') ? player.avatar : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${player.avatar}`}
+                              src={player.avatar.startsWith('http') ? player.avatar : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')}${player.avatar}`}
                               alt={language === 'ar' ? player.name_ar : player.name}
                               className="w-full h-full object-cover"
                               onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'block') }}
@@ -597,7 +597,7 @@ export default function Evaluations() {
               <div className={`w-12 h-12 bg-gradient-to-br ${(editingQuickEval || editingDetailedEval) ? 'from-blue-400 to-blue-600' : 'from-emerald-400 to-emerald-600'} rounded-xl flex items-center justify-center text-white text-lg font-bold overflow-hidden`}>
                 {selectedPlayer.avatar ? (
                   <img 
-                    src={selectedPlayer.avatar.startsWith('http') ? selectedPlayer.avatar : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${selectedPlayer.avatar}`}
+                    src={selectedPlayer.avatar.startsWith('http') ? selectedPlayer.avatar : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')}${selectedPlayer.avatar}`}
                     alt={language === 'ar' ? selectedPlayer.name_ar : selectedPlayer.name}
                     className="w-full h-full object-cover"
                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'block') }}

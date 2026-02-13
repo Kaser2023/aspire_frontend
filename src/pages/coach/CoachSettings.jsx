@@ -6,7 +6,7 @@ import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
 import DeveloperCreditInline from '../../components/common/DeveloperCreditInline'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const FILE_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
 
 export default function CoachSettings() {
   const { language } = useLanguage()
@@ -44,7 +44,7 @@ export default function CoachSettings() {
         email: user.email || ''
       })
       if (user.avatar) {
-        setAvatarPreview(`${API_URL.replace('/api', '')}${user.avatar}`)
+        setAvatarPreview(`${FILE_BASE_URL}${user.avatar}`)
       }
     }
   }, [user])

@@ -7,7 +7,7 @@ import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
 import DeveloperCreditInline from '../../components/common/DeveloperCreditInline'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const FILE_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
 
 export default function Settings() {
   const { language } = useLanguage()
@@ -67,7 +67,7 @@ export default function Settings() {
       }
       
       if (avatarUrl) {
-        setAvatarPreview(`${API_URL.replace('/api', '')}${avatarUrl}`)
+        setAvatarPreview(`${FILE_BASE_URL}${avatarUrl}`)
       }
     }
   }, [user])
