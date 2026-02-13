@@ -19,15 +19,15 @@ export default function MobileMenu({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-40">
+    <div className="fixed inset-0 z-[60]">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+      <div
+        className="absolute inset-0 bg-white/70 dark:bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Menu Panel */}
-      <div className="absolute top-20 left-4 right-4 glass dark:glass-dark rounded-2xl p-6 shadow-2xl">
+      <div className="absolute top-20 left-4 right-4 bg-white/95 dark:bg-secondary/95 rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-white/10">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
           <div className="flex items-center gap-2">
