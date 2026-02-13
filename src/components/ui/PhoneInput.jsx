@@ -8,7 +8,7 @@ const countryCodes = [
   { code: '+968', country: 'OM', flag: '🇴🇲', name: 'Oman' },
   { code: '+965', country: 'KW', flag: '🇰🇼', name: 'Kuwait' },
   { code: '+962', country: 'JO', flag: '🇯🇴', name: 'Jordan' },
-  {code: '90', country: 'TR', flag: '🇹🇷', name: 'Turkey' },
+  { code: '+90', country: 'TR', flag: '🇹🇷', name: 'Turkey' },
   { code: '+20', country: 'EG', flag: '🇪🇬', name: 'Egypt' },
   { code: '+212', country: 'MA', flag: '🇲🇦', name: 'Morocco' },
   { code: '+963', country: 'SY', flag: '🇸🇾', name: 'Syria' },
@@ -39,15 +39,15 @@ export default function PhoneInput({
   }
 
   return (
-    <div className={className}>
+    <div className={`w-full ${className}`.trim()}>
       {label && (
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
           {label}
         </label>
       )}
-      <div className="relative flex">
+      <div className="relative flex w-full">
         {/* Country Code Selector */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
@@ -94,7 +94,7 @@ export default function PhoneInput({
           onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
           required={required}
           maxLength={10}
-          className="flex-1 px-4 py-3 rounded-r-xl rtl:rounded-r-none rtl:rounded-l-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          className="flex-1 min-w-0 px-4 py-3 rounded-r-xl rtl:rounded-r-none rtl:rounded-l-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
           placeholder="5XXXXXXXX"
           dir="ltr"
         />
