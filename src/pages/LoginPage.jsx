@@ -61,7 +61,22 @@ export default function LoginPage() {
     }
   }
 
-  const displayError = localError || error
+  const translateAuthError = (message) => {
+    if (!message || language !== 'ar') return message
+
+    const normalized = String(message).trim().toLowerCase()
+    const dictionary = {
+      'invalid phone number or password': 'رقم الجوال أو كلمة المرور غير صحيحة',
+      'phone number and password are required': 'رقم الجوال وكلمة المرور مطلوبان',
+      'please use otp login for this account': 'يرجى استخدام تسجيل الدخول برمز التحقق لهذا الحساب',
+      'your account has been deactivated. please contact support.': 'تم تعطيل حسابك. يرجى التواصل مع الدعم',
+      'login failed': 'فشل تسجيل الدخول',
+    }
+
+    return dictionary[normalized] || message
+  }
+
+  const displayError = translateAuthError(localError || error)
 
   return (
     <main className="relative z-10 min-h-screen pt-28 md:pt-32 pb-12 px-4 md:px-6 lg:px-12 flex items-center justify-center">

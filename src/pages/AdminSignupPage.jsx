@@ -38,6 +38,8 @@ export default function AdminSignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [keyVerified, setKeyVerified] = useState(false)
   const [isFirstSetup, setIsFirstSetup] = useState(false)
+  const [adminAction, setAdminAction] = useState('register') // register | reset
+  const [successAction, setSuccessAction] = useState('register')
 
   // Redirect if already logged in as admin
   useEffect(() => {
@@ -105,17 +107,6 @@ export default function AdminSignupPage() {
     e.preventDefault()
     setError('')
 
-    // Validation
-    if (!formData.firstName || !formData.lastName) {
-      setError(language === 'ar' ? 'يرجى إدخال الاسم الكامل' : 'Please enter your full name')
-      return
-    }
-
-    if (!formData.email) {
-      setError(language === 'ar' ? 'يرجى إدخال البريد الإلكتروني' : 'Please enter your email')
-      return
-    }
-
     if (!formData.phone) {
       setError(language === 'ar' ? 'يرجى إدخال رقم الجوال' : 'Please enter your phone number')
       return
@@ -131,28 +122,61 @@ export default function AdminSignupPage() {
       return
     }
 
+    if (adminAction === 'register') {
+      if (!formData.firstName || !formData.lastName) {
+        setError(language === 'ar' ? 'يرجى إدخال الاسم الكامل' : 'Please enter your full name')
+        return
+      }
+
+      if (!formData.email) {
+        setError(language === 'ar' ? 'يرجى إدخال البريد الإلكتروني' : 'Please enter your email')
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const fullPhone = formatPhoneForApi(formData.phone, formData.countryCode)
-      
-      const response = await authService.registerAdmin({
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        name_ar: formData.nameAr || `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        phone: fullPhone,
-        password: formData.password,
-        role: formData.role,
-        setup_key: formData.setupKey
-      })
 
-      if (response.success) {
-        setStep(3)
+      if (adminAction === 'reset') {
+        const response = await authService.resetAdminPassword({
+          setup_key: formData.setupKey,
+          phone: fullPhone,
+          password: formData.password
+        })
+
+        if (response.success) {
+          setSuccessAction('reset')
+          setStep(3)
+        } else {
+          setError(response.message || (language === 'ar' ? 'فشل في إعادة تعيين كلمة المرور' : 'Failed to reset password'))
+        }
       } else {
-        setError(response.message || (language === 'ar' ? 'فشل في إنشاء الحساب' : 'Failed to create account'))
+        const response = await authService.registerAdmin({
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          name_ar: formData.nameAr || `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          phone: fullPhone,
+          password: formData.password,
+          role: formData.role,
+          setup_key: formData.setupKey
+        })
+
+        if (response.success) {
+          setSuccessAction('register')
+          setStep(3)
+        } else {
+          setError(response.message || (language === 'ar' ? 'فشل في إنشاء الحساب' : 'Failed to create account'))
+        }
       }
     } catch (err) {
-      setError(err.message || (language === 'ar' ? 'فشل في إنشاء الحساب' : 'Failed to create account'))
+      setError(
+        err.message ||
+        (adminAction === 'reset'
+          ? (language === 'ar' ? 'فشل في إعادة تعيين كلمة المرور' : 'Failed to reset password')
+          : (language === 'ar' ? 'فشل في إنشاء الحساب' : 'Failed to create account'))
+      )
     } finally {
       setLoading(false)
     }
@@ -219,6 +243,52 @@ export default function AdminSignupPage() {
   // Render Step 2: Account Details
   const renderAccountForm = () => (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {!isFirstSetup && (
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            {language === 'ar' ? 'العملية' : 'Action'}
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setAdminAction('register')}
+              className={`p-3 rounded-xl border-2 transition-all ${
+                adminAction === 'register'
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                  : 'border-gray-200 dark:border-white/10 hover:border-purple-300'
+              }`}
+            >
+              <div className={`font-semibold text-sm ${adminAction === 'register' ? 'text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                {language === 'ar' ? 'إنشاء حساب' : 'Create Account'}
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAdminAction('reset')}
+              className={`p-3 rounded-xl border-2 transition-all ${
+                adminAction === 'reset'
+                  ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10'
+                  : 'border-gray-200 dark:border-white/10 hover:border-amber-300'
+              }`}
+            >
+              <div className={`font-semibold text-sm ${adminAction === 'reset' ? 'text-amber-700 dark:text-amber-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                {language === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {adminAction === 'reset' && !isFirstSetup && (
+        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            {language === 'ar'
+              ? 'أدخل جوال حساب المدير العام/المالك الجديد وكلمة المرور الجديدة. يتطلب ذلك مفتاح الإعداد.'
+              : 'Enter the Super Admin/Owner phone and a new password. This requires the setup key.'}
+          </p>
+        </div>
+      )}
+
       {/* First Setup Banner */}
       {isFirstSetup && (
         <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 border border-amber-200 dark:border-amber-500/20 mb-4">
@@ -240,8 +310,8 @@ export default function AdminSignupPage() {
         </div>
       )}
 
-      {/* Role Selection (if not first setup) */}
-      {!isFirstSetup && (
+      {/* Role Selection (if not first setup and registering) */}
+      {!isFirstSetup && adminAction === 'register' && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             {language === 'ar' ? 'نوع الحساب' : 'Account Type'}
@@ -280,6 +350,7 @@ export default function AdminSignupPage() {
       )}
 
       {/* Name Fields */}
+      {adminAction === 'register' && (
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -310,8 +381,10 @@ export default function AdminSignupPage() {
           />
         </div>
       </div>
+      )}
 
       {/* Arabic Name (Optional) */}
+      {adminAction === 'register' && (
       <div>
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
           {language === 'ar' ? 'الاسم بالعربي' : 'Name in Arabic'} 
@@ -327,8 +400,10 @@ export default function AdminSignupPage() {
           placeholder="أحمد السعود"
         />
       </div>
+      )}
 
       {/* Email */}
+      {adminAction === 'register' && (
       <div>
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
           {language === 'ar' ? 'البريد الإلكتروني' : 'Email'} *
@@ -343,6 +418,7 @@ export default function AdminSignupPage() {
           required
         />
       </div>
+      )}
 
       {/* Phone */}
       <PhoneInput
@@ -418,8 +494,12 @@ export default function AdminSignupPage() {
       {/* Submit */}
       <Button type="submit" className="w-full bg-gradient-to-r from-purple-500 to-pink-500" disabled={loading}>
         {loading 
-          ? (language === 'ar' ? 'جاري إنشاء الحساب...' : 'Creating Account...') 
-          : (language === 'ar' ? 'إنشاء الحساب' : 'Create Account')}
+          ? (adminAction === 'reset'
+              ? (language === 'ar' ? 'جاري إعادة التعيين...' : 'Resetting...')
+              : (language === 'ar' ? 'جاري إنشاء الحساب...' : 'Creating Account...'))
+          : (adminAction === 'reset'
+              ? (language === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset Password')
+              : (language === 'ar' ? 'إنشاء الحساب' : 'Create Account'))}
       </Button>
 
       {/* Back button */}
@@ -445,25 +525,35 @@ export default function AdminSignupPage() {
       </div>
       
       <h2 className="text-2xl font-bold text-secondary dark:text-white mb-3">
-        {language === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account Created Successfully!'}
+        {successAction === 'reset'
+          ? (language === 'ar' ? 'تمت إعادة تعيين كلمة المرور بنجاح!' : 'Password Reset Successfully!')
+          : (language === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account Created Successfully!')}
       </h2>
       
       <p className="text-gray-600 dark:text-gray-400 mb-6">
-        {language === 'ar' 
-          ? 'يمكنك الآن تسجيل الدخول باستخدام بيانات الاعتماد الخاصة بك.'
-          : 'You can now log in with your credentials.'}
+        {successAction === 'reset'
+          ? (language === 'ar'
+              ? 'يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.'
+              : 'You can now log in with your new password.')
+          : (language === 'ar'
+              ? 'يمكنك الآن تسجيل الدخول باستخدام بيانات الاعتماد الخاصة بك.'
+              : 'You can now log in with your credentials.')}
       </p>
 
       <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 mb-6">
-        <p className="text-sm text-purple-700 dark:text-purple-300">
-          <strong>{language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</strong> {formData.email}
-        </p>
+        {successAction === 'register' && (
+          <p className="text-sm text-purple-700 dark:text-purple-300">
+            <strong>{language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</strong> {formData.email}
+          </p>
+        )}
         <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
           <strong>{language === 'ar' ? 'الجوال:' : 'Phone:'}</strong> {formatPhoneForApi(formData.phone, formData.countryCode)}
         </p>
-        <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
-          <strong>{language === 'ar' ? 'الدور:' : 'Role:'}</strong> {formData.role === 'owner' ? (language === 'ar' ? 'مالك النظام' : 'System Owner') : (language === 'ar' ? 'مدير عام' : 'Super Admin')}
-        </p>
+        {successAction === 'register' && (
+          <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+            <strong>{language === 'ar' ? 'الدور:' : 'Role:'}</strong> {formData.role === 'owner' ? (language === 'ar' ? 'مالك النظام' : 'System Owner') : (language === 'ar' ? 'مدير عام' : 'Super Admin')}
+          </p>
+        )}
       </div>
 
       <Link to="/login">

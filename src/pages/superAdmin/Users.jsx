@@ -74,6 +74,7 @@ export default function Users() {
     programs: [], // For coach creation - multiple programs
     programId: '', // For player creation
     coachId: '', // For player creation - selected coach
+    selfUserId: '', // Linked self-player user account (if any)
     children: [], // For parent creation - connected children
     birthDate: '',
     parentId: '', // For player creation
@@ -243,6 +244,7 @@ export default function Users() {
             healthNotes: p.medical_notes || '',
             nationality: p.nationality || '',
             address: p.address || '',
+            selfUserId: p.selfUser?.id || null,
             // Also keep transformed fields for display
             name: { 
               en: `${p.first_name || ''} ${p.last_name || ''}`.trim(), 
@@ -458,7 +460,7 @@ export default function Users() {
     setFormData({ 
       name: '', nameAr: '', firstName: '', lastName: '',
       countryCode: DEFAULT_COUNTRY_CODE, phone: '', email: '', password: '', branch: '', branchId: '', program: '', programs: [], programId: '',
-      children: [], coachId: '',
+      children: [], coachId: '', selfUserId: '',
       birthDate: '', parentId: '', parentName: '', parentNameAr: '', parentPhone: '', coach: '',
       gender: 'male', idType: 'national_id', idDocument: null, idDocumentPreview: null, healthNotes: '',
       nationality: '', address: '',
@@ -517,7 +519,7 @@ export default function Users() {
     const isPlayer = activeTab === 'players'
     
     if (isPlayer) {
-      const phoneData = parsePhoneToCountryAndLocal(user.phone || '')
+      const phoneData = parsePhoneToCountryAndLocal(user.selfUserPhone || '')
       // Handle player-specific fields using preserved original data
       setFormData({
         firstName: user.first_name || '',
@@ -526,6 +528,7 @@ export default function Users() {
         phone: phoneData.localNumber,
         email: user.email || '',
         password: '',
+        selfUserId: user.selfUserId || '',
         branchId: user.branchId || '',
         programId: user.programId || '',
         coachId: user.coach?.id || '',
@@ -574,6 +577,7 @@ export default function Users() {
         programs: user.programs?.map(p => p.id) || [],
         permissions: user.permissions || [],
         children: user.children?.map(c => c.id) || [], // Add children for parents
+        selfUserId: '',
         birthDate: '',
         parentName: '',
         parentNameAr: '',
@@ -636,6 +640,27 @@ export default function Users() {
 
         if (response.success) {
           const playerId = editingUser?.id || response.data?.id
+
+          // Update linked self-player login account (phone/password) when available.
+          if (editingUser && formData.selfUserId) {
+            const linkedUserData = {}
+            const formattedPhone = formatPhoneForApi(formData.phone, formData.countryCode)
+            if (formattedPhone) {
+              linkedUserData.phone = formattedPhone
+            }
+            if (formData.password?.trim()) {
+              linkedUserData.password = formData.password
+            }
+            if (Object.keys(linkedUserData).length > 0) {
+              await usersService.update(formData.selfUserId, linkedUserData)
+            }
+          } else if (formData.password?.trim()) {
+            throw new Error(
+              language === 'ar'
+                ? 'لا يمكن تعيين كلمة مرور لهذا اللاعب لأنه غير مرتبط بحساب دخول'
+                : 'Cannot set password because this player is not linked to a login account'
+            )
+          }
           
           // Upload avatar if provided
           if (formData.avatar && playerId) {
@@ -775,7 +800,12 @@ export default function Users() {
           await usersService.delete(userId)
         }
       } else {
-        await usersService.toggleStatus(userId)
+        // Soft delete for players should deactivate player status, not user status.
+        if (userType === 'players') {
+          await playersService.updateStatus(userId, 'inactive')
+        } else {
+          await usersService.toggleStatus(userId)
+        }
       }
       
       setSuccessMessage(
@@ -787,12 +817,18 @@ export default function Users() {
       fetchUserCounts()
     } catch (err) {
       console.error('Error deleting user:', err)
-      setError(err.message || (language === 'ar' ? 'فشل في حذف المستخدم' : 'Failed to delete user'))
+      setError(err.response?.data?.message || err.message || (language === 'ar' ? 'فشل في حذف المستخدم' : 'Failed to delete user'))
     } finally {
       setLoading(false)
       setDeleteConfirmId(null)
       setDeleteType('soft')
     }
+  }
+
+  const handleDelete = (id, type = activeTab) => {
+    if (!id) return
+    setDeleteConfirmId(`${type}-${id}`)
+    setDeleteType('hard')
   }
 
   const getStatusBadge = (status) => {
@@ -830,7 +866,10 @@ export default function Users() {
   const renderAddForm = () => {
     const isEditing = editingUser !== null
     const needsPassword = ['superadmins', 'supervisors', 'coaches', 'accountants', 'accounts'].includes(activeTab) && !isEditing
-    const canResetPassword = isEditing && ['superadmins', 'supervisors', 'coaches', 'accountants', 'accounts'].includes(activeTab)
+    const canResetPassword = isEditing && (
+      ['superadmins', 'supervisors', 'coaches', 'accountants', 'accounts'].includes(activeTab) ||
+      (activeTab === 'players' && !!formData.selfUserId)
+    )
     const isPlayerForm = activeTab === 'players'
 
     return (
@@ -924,6 +963,26 @@ export default function Users() {
                     required
                   />
                 </div>
+
+                {/* Linked Login Phone (editable only when player has linked account) */}
+                {isEditing && (
+                  <div>
+                    <PhoneInput
+                      label={language === 'ar' ? 'جوال حساب اللاعب' : 'Player Login Phone'}
+                      value={formData.phone}
+                      onChange={(value) => setFormData({ ...formData, phone: value })}
+                      countryCode={formData.countryCode}
+                      onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
+                      className="w-full"
+                      required={false}
+                    />
+                    {!formData.selfUserId && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        {language === 'ar' ? 'لا يوجد حساب دخول مرتبط حتى الآن' : 'No linked login account yet'}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Parent (custom dropdown with internal search) */}
                 <div>
@@ -1253,6 +1312,41 @@ export default function Users() {
                     rows={2}
                   />
                 </div>
+
+                {/* Reset Password for linked self-player account */}
+                {canResetPassword && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      {language === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 pr-12"
+                        placeholder={language === 'ar' ? 'اتركه فارغاً إذا لم ترد التغيير' : 'Leave empty to keep current'}
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        {showPassword ? (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               /* Non-Player Forms */
@@ -2194,7 +2288,7 @@ export default function Users() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => handleDelete(acc.id, 'hard')}
+                    onClick={() => handleDelete(acc.id, 'accounts')}
                     className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
                     title={language === 'ar' ? 'حذف' : 'Delete'}
                   >
@@ -2270,7 +2364,7 @@ export default function Users() {
                 </svg>
                 {language === 'ar' ? 'تعديل' : 'Edit'}
               </button>
-              <button onClick={() => handleDelete(acc.id, 'hard')} className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
+              <button onClick={() => handleDelete(acc.id, 'accounts')} className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
@@ -2537,6 +2631,67 @@ export default function Users() {
           {renderUsersList()}
         </div>
       </GlassCard>
+
+      {/* Shared delete confirmation (covers players/accounts tables too) */}
+      {deleteConfirmId && (activeTab === 'players' || activeTab === 'accounts') && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 shadow-2xl p-5">
+            <h3 className="text-lg font-bold text-secondary dark:text-white mb-2">
+              {language === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              {language === 'ar'
+                ? 'هل أنت متأكد أنك تريد حذف هذا المستخدم؟'
+                : 'Are you sure you want to delete this user?'}
+            </p>
+
+            <div className="space-y-2 mb-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  value="soft"
+                  checked={deleteType === 'soft'}
+                  onChange={() => setDeleteType('soft')}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {language === 'ar' ? 'تعطيل فقط' : 'Deactivate only'}
+                </span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  value="hard"
+                  checked={deleteType === 'hard'}
+                  onChange={() => setDeleteType('hard')}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm text-red-600">
+                  {language === 'ar' ? 'حذف نهائي' : 'Permanent delete'}
+                </span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setDeleteConfirmId(null); setDeleteType('soft') }}
+                className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg"
+              >
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={loading}
+                className={`px-4 py-2 text-sm font-semibold text-white rounded-lg ${deleteType === 'hard' ? 'bg-red-500' : 'bg-yellow-500'} disabled:opacity-50`}
+              >
+                {loading ? '...' : (language === 'ar' ? 'تأكيد' : 'Confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

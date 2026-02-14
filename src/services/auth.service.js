@@ -190,6 +190,13 @@ const authService = {
   async registerAdmin(data) {
     return api.post('/auth/register-admin', data);
   },
+
+  /**
+   * Reset existing admin password using setup key
+   */
+  async resetAdminPassword(data) {
+    return api.post('/auth/reset-admin-password', data);
+  },
 };
 
 export default authService;
