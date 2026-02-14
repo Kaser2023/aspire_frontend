@@ -5,7 +5,6 @@ import { usersService } from '../../services'
 import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
 import PhoneInput from '../../components/ui/PhoneInput'
-import DeveloperCreditInline from '../../components/common/DeveloperCreditInline'
 import { DEFAULT_COUNTRY_CODE, formatPhoneForApi, parsePhoneToCountryAndLocal } from '../../utils/phone'
 
 const FILE_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
@@ -323,7 +322,6 @@ export default function CoachSettings() {
           </div>
         </GlassCard>
       </div>
-      <DeveloperCreditInline />
     </div>
   )
 }
