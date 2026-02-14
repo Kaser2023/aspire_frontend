@@ -158,13 +158,85 @@ export default function Users() {
     return base
   }, [])
 
+  // Load all program pages so coach assignment lists never truncate at API default limits.
+  const fetchAllPrograms = useCallback(async () => {
+    const pageSize = 200
+    const firstPage = await programsService.getAll({ page: 1, limit: pageSize })
+
+    if (!firstPage?.success) {
+      return []
+    }
+
+    const firstPageData = Array.isArray(firstPage.data) ? firstPage.data : []
+    const totalPages = Math.max(1, firstPage?.pagination?.totalPages || 1)
+
+    if (totalPages === 1) {
+      return firstPageData
+    }
+
+    const pageRequests = []
+    for (let page = 2; page <= totalPages; page++) {
+      pageRequests.push(programsService.getAll({ page, limit: pageSize }))
+    }
+
+    const pageResponses = await Promise.all(pageRequests)
+    const remainingPrograms = pageResponses.flatMap((response) =>
+      response?.success && Array.isArray(response.data) ? response.data : []
+    )
+
+    // Remove accidental duplicates by id if backend ordering changes between pages.
+    const uniqueProgramsById = new Map()
+    ;[...firstPageData, ...remainingPrograms].forEach((program) => {
+      if (program?.id != null) {
+        uniqueProgramsById.set(program.id, program)
+      }
+    })
+
+    return Array.from(uniqueProgramsById.values())
+  }, [])
+
+  const fetchAllUsersByRole = useCallback(async (role) => {
+    const pageSize = 200
+    const firstPage = await usersService.getByRole(role, { page: 1, limit: pageSize })
+
+    if (!firstPage?.success) {
+      return []
+    }
+
+    const firstPageData = Array.isArray(firstPage.data) ? firstPage.data : []
+    const totalPages = Math.max(1, firstPage?.pagination?.totalPages || 1)
+
+    if (totalPages === 1) {
+      return firstPageData
+    }
+
+    const pageRequests = []
+    for (let page = 2; page <= totalPages; page++) {
+      pageRequests.push(usersService.getByRole(role, { page, limit: pageSize }))
+    }
+
+    const pageResponses = await Promise.all(pageRequests)
+    const remainingUsers = pageResponses.flatMap((response) =>
+      response?.success && Array.isArray(response.data) ? response.data : []
+    )
+
+    const uniqueUsersById = new Map()
+    ;[...firstPageData, ...remainingUsers].forEach((user) => {
+      if (user?.id != null) {
+        uniqueUsersById.set(user.id, user)
+      }
+    })
+
+    return Array.from(uniqueUsersById.values())
+  }, [])
+
   // Fetch branches, programs, and parents
   const fetchBranchesAndPrograms = useCallback(async () => {
     try {
       const [branchesRes, programsRes, parentsRes] = await Promise.all([
         branchesService.getAll(),
-        programsService.getAll(),
-        usersService.getByRole('parent', { limit: 100 })
+        fetchAllPrograms(),
+        fetchAllUsersByRole('parent')
       ])
       
       if (branchesRes.success && branchesRes.data) {
@@ -175,8 +247,8 @@ export default function Users() {
         setBranches(transformedBranches)
       }
       
-      if (programsRes.success && programsRes.data) {
-        const transformedPrograms = programsRes.data.map(p => ({
+      if (Array.isArray(programsRes)) {
+        const transformedPrograms = programsRes.map(p => ({
           id: p.id,
           name: { en: p.name, ar: p.name_ar || p.name },
           type: p.type,
@@ -189,8 +261,8 @@ export default function Users() {
         setPrograms(transformedPrograms)
       }
 
-      if (parentsRes.success && parentsRes.data) {
-        const transformedParents = parentsRes.data.map(p => ({
+      if (Array.isArray(parentsRes)) {
+        const transformedParents = parentsRes.map(p => ({
           id: p.id,
           name: { 
             en: `${p.first_name || ''} ${p.last_name || ''}`.trim(), 
@@ -205,7 +277,7 @@ export default function Users() {
     } catch (err) {
       console.error('Error fetching branches/programs/parents:', err)
     }
-  }, [])
+  }, [fetchAllPrograms, fetchAllUsersByRole])
 
   // Fetch users based on active tab
   const fetchUsers = useCallback(async () => {
@@ -391,10 +463,19 @@ export default function Users() {
   // Fetch all players for parent selection
   const fetchAllPlayers = useCallback(async () => {
     try {
-      // Try with no parameters first
-      const response = await playersService.getAll()
-      if (response.success) {
-        const transformed = response.data.map(p => ({
+      const pageSize = 200
+      const firstPage = await playersService.getAll({ page: 1, limit: pageSize })
+
+      if (!firstPage?.success) {
+        setAllPlayers([])
+        return
+      }
+
+      const firstPageData = Array.isArray(firstPage.data) ? firstPage.data : []
+      const totalPages = Math.max(1, firstPage?.pagination?.totalPages || 1)
+
+      if (totalPages === 1) {
+        const transformed = firstPageData.map(p => ({
           id: p.id,
           name: { 
             en: `${p.first_name || ''} ${p.last_name || ''}`.trim(), 
@@ -404,9 +485,36 @@ export default function Users() {
           status: p.status || 'active'
         }))
         setAllPlayers(transformed)
-      } else {
-        setAllPlayers([])
+        return
       }
+
+      const pageRequests = []
+      for (let page = 2; page <= totalPages; page++) {
+        pageRequests.push(playersService.getAll({ page, limit: pageSize }))
+      }
+
+      const pageResponses = await Promise.all(pageRequests)
+      const remainingPlayers = pageResponses.flatMap((response) =>
+        response?.success && Array.isArray(response.data) ? response.data : []
+      )
+
+      const uniquePlayersById = new Map()
+      ;[...firstPageData, ...remainingPlayers].forEach((player) => {
+        if (player?.id != null) {
+          uniquePlayersById.set(player.id, player)
+        }
+      })
+
+      const transformed = Array.from(uniquePlayersById.values()).map(p => ({
+        id: p.id,
+        name: { 
+          en: `${p.first_name || ''} ${p.last_name || ''}`.trim(), 
+          ar: `${p.first_name_ar || p.first_name || ''} ${p.last_name_ar || p.last_name || ''}`.trim()
+        },
+        branch: p.branch?.name || '',
+        status: p.status || 'active'
+      }))
+      setAllPlayers(transformed)
     } catch (err) {
       console.error('Error fetching all players:', err)
       setAllPlayers([])
@@ -415,32 +523,8 @@ export default function Users() {
 
   // Fetch all players on component load
   useEffect(() => {
-    const loadPlayers = async () => {
-      try {
-        // Try with no parameters first
-        const response = await playersService.getAll()
-        if (response.success) {
-          const transformed = response.data.map(p => ({
-            id: p.id,
-            name: { 
-              en: `${p.first_name || ''} ${p.last_name || ''}`.trim(), 
-              ar: `${p.first_name_ar || p.first_name || ''} ${p.last_name_ar || p.last_name || ''}`.trim()
-            },
-            branch: p.branch?.name || '',
-            status: p.status || 'active'
-          }))
-          setAllPlayers(transformed)
-        } else {
-          setAllPlayers([])
-        }
-      } catch (err) {
-        console.error('Error fetching all players:', err)
-        setAllPlayers([])
-      }
-    }
-    
-    loadPlayers()
-  }, []) // Empty dependency array - run once on mount
+    fetchAllPlayers()
+  }, [fetchAllPlayers])
 
   // Fetch all players when parent form is opened (backup)
   useEffect(() => {
