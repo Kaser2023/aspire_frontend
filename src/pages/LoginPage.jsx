@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import GlassCard from '../components/ui/GlassCard'
 import Button from '../components/ui/Button'
 import PhoneInput from '../components/ui/PhoneInput'
+import { formatPhoneForApi } from '../utils/phone'
 import logoImage from '../assets/images/logo.png'
 
 export default function LoginPage() {
@@ -51,7 +52,7 @@ export default function LoginPage() {
       return
     }
 
-    const fullPhone = formData.countryCode + formData.phone
+    const fullPhone = formatPhoneForApi(formData.phone, formData.countryCode)
     const result = await login(fullPhone, formData.password)
     if (result.success && result.user) {
       // Navigate to role-specific dashboard using the returned user

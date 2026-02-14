@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import GlassCard from '../components/ui/GlassCard'
 import Button from '../components/ui/Button'
 import PhoneInput from '../components/ui/PhoneInput'
+import { formatPhoneForApi } from '../utils/phone'
 import logoImage from '../assets/images/logo.png'
 import { authService, branchesService } from '../services'
 
@@ -187,7 +188,7 @@ export default function SignupPage() {
 
     setIsLoading(true)
     try {
-      const fullPhone = formData.countryCode + formData.phone
+      const fullPhone = formatPhoneForApi(formData.phone, formData.countryCode)
       
       // Use FormData for file uploads
       const formDataToSend = new FormData()

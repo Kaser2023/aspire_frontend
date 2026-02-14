@@ -4,6 +4,7 @@ import { useLanguage } from '../hooks/useLanguage'
 import GlassCard from '../components/ui/GlassCard'
 import Button from '../components/ui/Button'
 import PhoneInput from '../components/ui/PhoneInput'
+import { formatPhoneForApi } from '../utils/phone'
 import logoImage from '../assets/images/logo.png'
 
 export default function ForgotPasswordPage() {
@@ -28,7 +29,7 @@ export default function ForgotPasswordPage() {
   const handleSendOTP = (e) => {
     e.preventDefault()
     // Handle sending OTP logic here
-    console.log('Sending OTP to:', formData.countryCode + formData.phone)
+    console.log('Sending OTP to:', formatPhoneForApi(formData.phone, formData.countryCode))
     setStep(2)
   }
 
@@ -157,7 +158,7 @@ export default function ForgotPasswordPage() {
                       dir="ltr"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-                      {language === 'ar' ? 'تم إرسال الرمز إلى' : 'Code sent to'} {formData.countryCode}{formData.phone}
+                      {language === 'ar' ? 'تم إرسال الرمز إلى' : 'Code sent to'} {formatPhoneForApi(formData.phone, formData.countryCode)}
                     </p>
                   </div>
 

@@ -6,6 +6,7 @@ import { authService } from '../services'
 import GlassCard from '../components/ui/GlassCard'
 import Button from '../components/ui/Button'
 import PhoneInput from '../components/ui/PhoneInput'
+import { formatPhoneForApi } from '../utils/phone'
 import logoImage from '../assets/images/logo.png'
 import Background from '../components/common/Background'
 
@@ -132,7 +133,7 @@ export default function AdminSignupPage() {
 
     setLoading(true)
     try {
-      const fullPhone = formData.countryCode + formData.phone
+      const fullPhone = formatPhoneForApi(formData.phone, formData.countryCode)
       
       const response = await authService.registerAdmin({
         first_name: formData.firstName,
@@ -458,7 +459,7 @@ export default function AdminSignupPage() {
           <strong>{language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</strong> {formData.email}
         </p>
         <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
-          <strong>{language === 'ar' ? 'الجوال:' : 'Phone:'}</strong> {formData.countryCode}{formData.phone}
+          <strong>{language === 'ar' ? 'الجوال:' : 'Phone:'}</strong> {formatPhoneForApi(formData.phone, formData.countryCode)}
         </p>
         <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
           <strong>{language === 'ar' ? 'الدور:' : 'Role:'}</strong> {formData.role === 'owner' ? (language === 'ar' ? 'مالك النظام' : 'System Owner') : (language === 'ar' ? 'مدير عام' : 'Super Admin')}

@@ -1,24 +1,5 @@
 import { useState } from 'react'
-
-const countryCodes = [
-  { code: '+966', country: 'SA', flag: '🇸🇦', name: 'Saudi Arabia' },
-  { code: '+971', country: 'AE', flag: '🇦🇪', name: 'UAE' },
-  { code: '+973', country: 'BH', flag: '🇧🇭', name: 'Bahrain' },
-  { code: '+974', country: 'QA', flag: '🇶🇦', name: 'Qatar' },
-  { code: '+968', country: 'OM', flag: '🇴🇲', name: 'Oman' },
-  { code: '+965', country: 'KW', flag: '🇰🇼', name: 'Kuwait' },
-  { code: '+962', country: 'JO', flag: '🇯🇴', name: 'Jordan' },
-  { code: '+90', country: 'TR', flag: '🇹🇷', name: 'Turkey' },
-  { code: '+20', country: 'EG', flag: '🇪🇬', name: 'Egypt' },
-  { code: '+212', country: 'MA', flag: '🇲🇦', name: 'Morocco' },
-  { code: '+963', country: 'SY', flag: '🇸🇾', name: 'Syria' },
-  { code: '+964', country: 'IQ', flag: '🇮🇶', name: 'Iraq' },
-  { code: '+967', country: 'YE', flag: '🇾🇪', name: 'Yemen' },
-  { code: '+961', country: 'LB', flag: '🇱🇧', name: 'Lebanon' },
-  { code: '+970', country: 'PS', flag: '🇵🇸', name: 'Palestine' },
-  { code: '+1', country: 'US', flag: '🇺🇸', name: 'USA' },
-  { code: '+44', country: 'GB', flag: '🇬🇧', name: 'UK' },
-]
+import { PHONE_COUNTRY_CODES, getPhonePlaceholder, normalizeLocalPhoneInput } from '../../utils/phone'
 
 export default function PhoneInput({ 
   value, 
@@ -31,7 +12,7 @@ export default function PhoneInput({
 }) {
   const [isOpen, setIsOpen] = useState(false)
   
-  const selectedCountry = countryCodes.find(c => c.code === countryCode) || countryCodes[0]
+  const selectedCountry = PHONE_COUNTRY_CODES.find(c => c.code === countryCode) || PHONE_COUNTRY_CODES[0]
 
   const handleCountrySelect = (country) => {
     onCountryCodeChange(country.code)
@@ -68,7 +49,7 @@ export default function PhoneInput({
                 onClick={() => setIsOpen(false)}
               />
               <div className="absolute top-full left-0 rtl:left-auto rtl:right-0 mt-1 w-56 max-h-60 overflow-y-auto bg-white/95 dark:bg-secondary/95 backdrop-blur-xl rounded-xl shadow-2xl z-20 border border-gray-200 dark:border-white/20">
-                {countryCodes.map((country) => (
+                {PHONE_COUNTRY_CODES.map((country) => (
                   <button
                     key={country.code}
                     type="button"
@@ -91,11 +72,11 @@ export default function PhoneInput({
         <input
           type="tel"
           value={value}
-          onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
+          onChange={(e) => onChange(normalizeLocalPhoneInput(e.target.value, countryCode))}
           required={required}
-          maxLength={10}
+          maxLength={countryCode === '+966' ? 9 : 15}
           className="flex-1 min-w-0 px-4 py-3 rounded-r-xl rtl:rounded-r-none rtl:rounded-l-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-          placeholder="5XXXXXXXX"
+          placeholder={getPhonePlaceholder(countryCode)}
           dir="ltr"
         />
       </div>

@@ -5,6 +5,8 @@ import { usersService, branchesService, programsService } from '../../services'
 import playersService from '../../services/players.service'
 import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
+import PhoneInput from '../../components/ui/PhoneInput'
+import { DEFAULT_COUNTRY_CODE, formatPhoneForApi, parsePhoneToCountryAndLocal } from '../../utils/phone'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 const FILE_BASE_URL = API_URL.replace(/\/api\/?$/, '')
@@ -62,6 +64,7 @@ export default function Users() {
     nameAr: '',
     firstName: '',
     lastName: '',
+    countryCode: DEFAULT_COUNTRY_CODE,
     phone: '',
     email: '',
     password: '',
@@ -454,7 +457,7 @@ export default function Users() {
   const resetForm = () => {
     setFormData({ 
       name: '', nameAr: '', firstName: '', lastName: '',
-      phone: '', email: '', password: '', branch: '', branchId: '', program: '', programs: [], programId: '',
+      countryCode: DEFAULT_COUNTRY_CODE, phone: '', email: '', password: '', branch: '', branchId: '', program: '', programs: [], programId: '',
       children: [], coachId: '',
       birthDate: '', parentId: '', parentName: '', parentNameAr: '', parentPhone: '', coach: '',
       gender: 'male', idType: 'national_id', idDocument: null, idDocumentPreview: null, healthNotes: '',
@@ -514,11 +517,13 @@ export default function Users() {
     const isPlayer = activeTab === 'players'
     
     if (isPlayer) {
+      const phoneData = parsePhoneToCountryAndLocal(user.phone || '')
       // Handle player-specific fields using preserved original data
       setFormData({
         firstName: user.first_name || '',
         lastName: user.last_name || '',
-        phone: user.phone || '',
+        countryCode: phoneData.countryCode,
+        phone: phoneData.localNumber,
         email: user.email || '',
         password: '',
         branchId: user.branchId || '',
@@ -553,13 +558,15 @@ export default function Users() {
       const nameParts = (user.name?.en || '').split(' ')
       const firstName = nameParts[0] || ''
       const lastName = nameParts.slice(1).join(' ') || ''
+      const phoneData = parsePhoneToCountryAndLocal(user.phone || '')
       
       setFormData({
         name: user.name?.en || '',
         nameAr: user.name?.ar || '',
         firstName: firstName,
         lastName: lastName,
-        phone: user.phone || '',
+        countryCode: phoneData.countryCode,
+        phone: phoneData.localNumber,
         email: user.email || '',
         password: '',
         branch: user.branch || '',
@@ -667,7 +674,7 @@ export default function Users() {
       const userData = {
         first_name: formData.firstName,
         last_name: formData.lastName,
-        phone: formData.phone,
+        phone: formatPhoneForApi(formData.phone, formData.countryCode),
         email: formData.email || undefined,
         role: role,
         is_active: true
@@ -1330,15 +1337,13 @@ export default function Users() {
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    {language === 'ar' ? 'رقم الجوال' : 'Phone Number'} *
-                  </label>
-                  <input
-                    type="tel"
+                  <PhoneInput
+                    label={language === 'ar' ? 'رقم الجوال' : 'Phone Number'}
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="+966 50 XXX XXXX"
+                    onChange={(value) => setFormData({ ...formData, phone: value })}
+                    countryCode={formData.countryCode}
+                    onCountryCodeChange={(code) => setFormData({ ...formData, countryCode: code })}
+                    className="w-full"
                     required
                   />
                 </div>

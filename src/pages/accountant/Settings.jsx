@@ -4,7 +4,9 @@ import { useAuth } from '../../hooks/useAuth'
 import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
 import { usersService } from '../../services'
+import PhoneInput from '../../components/ui/PhoneInput'
 import DeveloperCreditInline from '../../components/common/DeveloperCreditInline'
+import { DEFAULT_COUNTRY_CODE, formatPhoneForApi, parsePhoneToCountryAndLocal } from '../../utils/phone'
 
 const FILE_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
 
@@ -22,6 +24,7 @@ export default function Settings() {
   const [profileForm, setProfileForm] = useState({
     first_name: '',
     last_name: '',
+    countryCode: DEFAULT_COUNTRY_CODE,
     phone: '',
     email: ''
   })
@@ -34,10 +37,12 @@ export default function Settings() {
 
   useEffect(() => {
     if (user) {
+      const phoneData = parsePhoneToCountryAndLocal(user.phone || '')
       setProfileForm({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
-        phone: user.phone || '',
+        countryCode: phoneData.countryCode,
+        phone: phoneData.localNumber,
         email: user.email || ''
       })
       if (user.avatar) {
@@ -78,7 +83,10 @@ export default function Settings() {
     setLoading(true)
     setMessage({ type: '', text: '' })
     try {
-      const response = await usersService.updateProfile(profileForm)
+      const response = await usersService.updateProfile({
+        ...profileForm,
+        phone: formatPhoneForApi(profileForm.phone, profileForm.countryCode)
+      })
       if (response.success) {
         setMessage({ type: 'success', text: language === 'ar' ? 'تم تحديث الملف الشخصي بنجاح' : 'Profile updated successfully' })
         if (refreshUser) refreshUser()
@@ -233,12 +241,13 @@ export default function Settings() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{language === 'ar' ? 'رقم الجوال' : 'Phone'}</label>
-                <input
-                  type="tel"
+                <PhoneInput
+                  label={language === 'ar' ? 'رقم الجوال' : 'Phone'}
                   value={profileForm.phone}
-                  onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  onChange={(value) => setProfileForm(prev => ({ ...prev, phone: value }))}
+                  countryCode={profileForm.countryCode}
+                  onCountryCodeChange={(code) => setProfileForm(prev => ({ ...prev, countryCode: code }))}
+                  className="w-full"
                 />
               </div>
               <div>

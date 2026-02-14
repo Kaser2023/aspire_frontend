@@ -3,6 +3,8 @@ import { useLanguage } from '../../hooks/useLanguage'
 import { branchesService, usersService } from '../../services'
 import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
+import PhoneInput from '../../components/ui/PhoneInput'
+import { DEFAULT_COUNTRY_CODE, formatPhoneForApi, parsePhoneToCountryAndLocal } from '../../utils/phone'
 
 export default function Branches() {
   const { language } = useLanguage()
@@ -22,6 +24,7 @@ export default function Branches() {
     name: '',
     locationEn: '',
     locationAr: '',
+    contactCountryCode: DEFAULT_COUNTRY_CODE,
     contact: ''
   })
 
@@ -105,6 +108,7 @@ export default function Branches() {
       name: '',
       locationEn: '',
       locationAr: '',
+      contactCountryCode: DEFAULT_COUNTRY_CODE,
       contact: ''
     })
     setEditingBranch(null)
@@ -120,12 +124,14 @@ export default function Branches() {
   const formatCurrency = (amount) => `SAR ${amount.toLocaleString()}`
 
   const handleEdit = (branch) => {
+    const phoneData = parsePhoneToCountryAndLocal(branch.contact || '')
     setEditingBranch(branch)
     setFormData({
       name: branch.name.en || branch.name.ar,
       locationEn: branch.location.en,
       locationAr: branch.location.ar,
-      contact: branch.contact
+      contactCountryCode: phoneData.countryCode,
+      contact: phoneData.localNumber
     })
     setShowAddForm(true)
   }
@@ -140,7 +146,7 @@ export default function Branches() {
         name: formData.name,
         name_ar: formData.name,
         address: formData.locationEn,
-        phone: formData.contact,
+        phone: formatPhoneForApi(formData.contact, formData.contactCountryCode),
         is_active: true
       }
 
@@ -251,15 +257,14 @@ export default function Branches() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  {language === 'ar' ? 'رقم الاتصال' : 'Contact Number'}
-                </label>
-                <input
-                  type="tel"
+                <PhoneInput
+                  label={language === 'ar' ? 'رقم الاتصال' : 'Contact Number'}
                   value={formData.contact}
-                  onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="+966 11 XXX XXXX"
+                  onChange={(value) => setFormData({ ...formData, contact: value })}
+                  countryCode={formData.contactCountryCode}
+                  onCountryCodeChange={(code) => setFormData({ ...formData, contactCountryCode: code })}
+                  className="w-full"
+                  required={false}
                 />
               </div>
             </div>
