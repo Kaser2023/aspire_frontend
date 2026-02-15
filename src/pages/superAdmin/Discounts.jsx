@@ -207,7 +207,7 @@ export default function Discounts() {
 
   const resetForm = () => {
     setForm({
-      branch_id: '',
+      branch_id: isBranchAdmin ? branchAdminBranchId : '',
       program_id: '',
       user_id: '',
       player_id: '',
@@ -217,9 +217,14 @@ export default function Discounts() {
       reason: '',
       expires_at: ''
     })
-    setPrograms([])
-    setParents([])
-    setPlayers([])
+    // Only clear branch-dependent data when branch actually changes (super admin).
+    // For branch admins the branch stays the same so useEffects won't re-fire;
+    // clearing these would leave the dropdowns empty.
+    if (!isBranchAdmin) {
+      setPrograms([])
+      setParents([])
+      setPlayers([])
+    }
     setPricingPlans([])
   }
 
