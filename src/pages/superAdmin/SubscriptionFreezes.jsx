@@ -150,12 +150,57 @@ export default function SubscriptionFreezes() {
     ? Math.max(0, Math.ceil((new Date(form.end_date) - new Date(form.start_date)) / (1000 * 60 * 60 * 24)) + 1)
     : 0
 
+  // When super admin picks a program, auto-set the branch from that program
+  useEffect(() => {
+    if (isBranchAdmin || !form.program_id) return
+    const selectedProgram = programs.find(p => String(p.id) === String(form.program_id))
+    if (selectedProgram?.branch_id && String(selectedProgram.branch_id) !== String(form.branch_id)) {
+      setForm(prev => ({ ...prev, branch_id: String(selectedProgram.branch_id) }))
+    }
+  }, [form.program_id, programs, isBranchAdmin]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When program changes and scope needs players, load players for that program
+  useEffect(() => {
+    if (isBranchAdmin) return // branch admin players are loaded once on form open
+    if (form.scope !== 'program_player' && form.scope !== 'program') return
+
+    if (!form.program_id) {
+      // No program selected yet — if branch is set, load all branch players
+      if (form.branch_id) {
+        const loadBranchPlayers = async () => {
+          try {
+            const response = await playersService.getAll({ branch_id: form.branch_id, limit: 500 })
+            if (response.success) setPlayers(response.data || [])
+          } catch (err) {
+            console.error('Error loading branch players:', err)
+          }
+        }
+        loadBranchPlayers()
+      }
+      return
+    }
+
+    // Program is selected — load players for that specific program
+    const loadProgramPlayers = async () => {
+      try {
+        const response = await playersService.getAll({ program_id: form.program_id, limit: 500 })
+        if (response.success) {
+          setPlayers(response.data || [])
+        }
+      } catch (err) {
+        console.error('Error loading program players:', err)
+      }
+    }
+    loadProgramPlayers()
+  }, [form.branch_id, form.program_id, form.scope, isBranchAdmin])
+
   // Filtered programs by branch
   const scopeNeedsProgram = form.scope === 'program' || form.scope === 'program_player'
   const filteredPrograms = scopeNeedsProgram && form.branch_id
     ? programs.filter(p => String(p.branch_id) === String(form.branch_id))
     : programs
 
+  // For program_player scope, show all loaded players (already fetched by program_id above)
   const filteredPlayers = form.program_id
     ? players.filter(p => String(p.program_id) === String(form.program_id))
     : []
@@ -380,7 +425,8 @@ export default function SubscriptionFreezes() {
                     : [
                         { value: 'global', label: { en: 'All Branches', ar: 'جميع الفروع' }, icon: '🌐' },
                         { value: 'branch', label: { en: 'Specific Branch', ar: 'فرع محدد' }, icon: '🏢' },
-                        { value: 'program', label: { en: 'Specific Program', ar: 'برنامج محدد' }, icon: '📋' }
+                        { value: 'program', label: { en: 'Specific Program', ar: 'برنامج محدد' }, icon: '📋' },
+                        { value: 'program_player', label: { en: 'By Program + Player', ar: 'حسب البرنامج + لاعب' }, icon: '👤' }
                       ])
                 ].map(opt => (
                   <button
