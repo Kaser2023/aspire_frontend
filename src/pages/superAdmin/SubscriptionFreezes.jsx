@@ -150,7 +150,7 @@ export default function SubscriptionFreezes() {
     ? Math.max(0, Math.ceil((new Date(form.end_date) - new Date(form.start_date)) / (1000 * 60 * 60 * 24)) + 1)
     : 0
 
-  // When super admin picks a program, auto-set the branch from that program
+  // When  super admin picks a program, auto-set the branch from that program
   useEffect(() => {
     if (isBranchAdmin || !form.program_id) return
     const selectedProgram = programs.find(p => String(p.id) === String(form.program_id))
