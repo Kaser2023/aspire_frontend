@@ -4,7 +4,7 @@ import { useLanguage } from '../hooks/useLanguage'
 import GlassCard from '../components/ui/GlassCard'
 import Button from '../components/ui/Button'
 import PhoneInput from '../components/ui/PhoneInput'
-import { formatPhoneForApi } from '../utils/phone'
+import { formatPhoneForApi, normalizeArabicNumerals } from '../utils/phone'
 import logoImage from '../assets/images/logo.png'
 
 export default function ForgotPasswordPage() {
@@ -20,9 +20,10 @@ export default function ForgotPasswordPage() {
   const [success, setSuccess] = useState(false)
 
   const handleChange = (e) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: name === 'otp' ? normalizeArabicNumerals(value).replace(/\D/g, '') : value,
     })
   }
 
@@ -152,7 +153,7 @@ export default function ForgotPasswordPage() {
                       onChange={handleChange}
                       required
                       maxLength={6}
-                      pattern="[0-9]{6}"
+                      pattern="[0-9٠-٩۰-۹]{6}"
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-center text-2xl tracking-[0.5em] font-bold"
                       placeholder="••••••"
                       dir="ltr"

@@ -6,6 +6,7 @@ import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
 import ParentAudienceSelector from '../../components/common/ParentAudienceSelector'
 import ChangeHistoryModal from '../../components/common/ChangeHistoryModal'
+import NumericInput from '../../components/ui/NumericInput'
 
 export default function Subscriptions() {
   const { language } = useLanguage()
@@ -1097,8 +1098,8 @@ export default function Subscriptions() {
                         ? (language === 'ar' ? 'أيام بعد التأخير' : 'Days after overdue')
                         : (language === 'ar' ? 'أيام قبل الانتهاء' : 'Days before expiry')}
                     </label>
-                    <input
-                      type="number"
+                    <NumericInput
+                      integer
                       min="1"
                       max="60"
                       value={newAutoSetting.type === 'payment_overdue' ? (newAutoSetting.days_after || 3) : newAutoSetting.days_before}
@@ -1498,8 +1499,8 @@ export default function Subscriptions() {
                         ? (language === 'ar' ? 'أيام بعد التأخير' : 'Days after overdue')
                         : (language === 'ar' ? 'أيام قبل الانتهاء' : 'Days before expiry')}
                     </label>
-                    <input
-                      type="number"
+                    <NumericInput
+                      integer
                       min="1"
                       max="60"
                       value={newAutoAnnouncementSetting.type === 'payment_overdue' ? (newAutoAnnouncementSetting.days_after || 3) : newAutoAnnouncementSetting.days_before}

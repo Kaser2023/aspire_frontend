@@ -20,7 +20,17 @@ export const PHONE_COUNTRY_CODES = [
 
 export const DEFAULT_COUNTRY_CODE = '+966'
 
-const getDigits = (value = '') => String(value || '').replace(/\D/g, '')
+/**
+ * Convert Eastern Arabic (٠١٢٣٤٥٦٧٨٩) and Extended Arabic-Indic (۰۱۲۳۴۵۶۷۸۹)
+ * numerals to Western Arabic numerals (0123456789).
+ */
+export const normalizeArabicNumerals = (value = '') => {
+  return String(value || '')
+    .replace(/[٠-٩]/g, (d) => d.charCodeAt(0) - 0x0660)   // Eastern Arabic
+    .replace(/[۰-۹]/g, (d) => d.charCodeAt(0) - 0x06F0)   // Extended Arabic-Indic
+}
+
+const getDigits = (value = '') => normalizeArabicNumerals(value).replace(/\D/g, '')
 
 const getCodeDigits = (countryCode = DEFAULT_COUNTRY_CODE) => getDigits(countryCode)
 

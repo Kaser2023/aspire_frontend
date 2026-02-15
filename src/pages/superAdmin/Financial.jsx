@@ -5,6 +5,7 @@ import playersService from '../../services/players.service'
 import programsService from '../../services/programs.service'
 import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
+import NumericInput from '../../components/ui/NumericInput'
 
 export default function Financial() {
   const { language } = useLanguage()
@@ -677,8 +678,7 @@ export default function Financial() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {language === 'ar' ? 'المبلغ' : 'Amount'}
                   </label>
-                  <input
-                    type="number"
+                  <NumericInput
                     min="0"
                     step="0.01"
                     value={paymentForm.amount}

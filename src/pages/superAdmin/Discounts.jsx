@@ -5,6 +5,7 @@ import { discountsService, branchesService, programsService, playersService, use
 import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
 import ChangeHistoryModal from '../../components/common/ChangeHistoryModal'
+import NumericInput from '../../components/ui/NumericInput'
 
 export default function Discounts() {
   const { language } = useLanguage()
@@ -513,8 +514,7 @@ export default function Discounts() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {language === 'ar' ? 'القيمة *' : 'Value *'}
                 </label>
-                <input
-                  type="number"
+                <NumericInput
                   step="0.01"
                   min="0"
                   max={form.discount_type === 'percentage' ? 100 : undefined}

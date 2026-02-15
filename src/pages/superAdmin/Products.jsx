@@ -3,6 +3,7 @@ import { useLanguage } from '../../hooks/useLanguage'
 import { productsService } from '../../services'
 import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
+import NumericInput from '../../components/ui/NumericInput'
 
 const getInitialForm = () => ({
   name_en: '',
@@ -292,8 +293,7 @@ export default function Products() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {language === 'ar' ? 'السعر (ريال) *' : 'Price (SAR) *'}
               </label>
-              <input
-                type="number"
+              <NumericInput
                 min="1"
                 step="0.01"
                 value={form.price}

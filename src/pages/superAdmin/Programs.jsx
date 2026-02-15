@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { programsService, branchesService } from '../../services'
 import GlassCard from '../../components/ui/GlassCard'
 import Button from '../../components/ui/Button'
+import NumericInput from '../../components/ui/NumericInput'
 
 export default function Programs() {
   const { language } = useLanguage()
@@ -407,8 +408,8 @@ export default function Programs() {
                       </div>
                       <div className="w-28">
                         <label className="block text-xs text-gray-500 mb-1">{language === 'ar' ? 'المدة (شهر)' : 'Duration (mo)'} *</label>
-                        <input
-                          type="number"
+                        <NumericInput
+                          integer
                           min="1"
                           value={plan.duration_months}
                           onChange={(e) => updatePricingPlan(index, 'duration_months', e.target.value)}
@@ -418,8 +419,7 @@ export default function Programs() {
                       </div>
                       <div className="w-28">
                         <label className="block text-xs text-gray-500 mb-1">{language === 'ar' ? 'السعر (SAR)' : 'Price (SAR)'} *</label>
-                        <input
-                          type="number"
+                        <NumericInput
                           value={plan.price}
                           onChange={(e) => updatePricingPlan(index, 'price', e.target.value)}
                           placeholder="0"
