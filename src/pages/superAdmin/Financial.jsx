@@ -925,9 +925,9 @@ export default function Financial() {
 
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
-            <div className="min-w-[1100px] space-y-3">
-              <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-gray-500 px-2">
-                <span>{language === 'ar' ? 'رقم الفاتورة' : 'Invoice #'}</span>
+            <div className="min-w-[1320px] space-y-3">
+              <div className="grid grid-cols-[180px_130px_130px_100px_110px_90px_70px_100px_80px_90px_90px_120px] gap-3 text-xs font-semibold text-gray-500 px-2">
+                <span className={language === 'ar' ? 'text-right' : 'text-left'}>{language === 'ar' ? 'رقم الفاتورة' : 'Invoice #'}</span>
                 <span>{language === 'ar' ? 'اللاعب' : 'Player'}</span>
                 <span>{language === 'ar' ? 'ولي الأمر' : 'Parent'}</span>
                 <span>{language === 'ar' ? 'الفرع' : 'Branch'}</span>
@@ -948,9 +948,14 @@ export default function Financial() {
                 return (
                 <div
                   key={payment.id}
-                  className="grid grid-cols-12 gap-3 items-center p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-white/60 dark:border-white/10 shadow-sm"
+                  className="grid grid-cols-[180px_130px_130px_100px_110px_90px_70px_100px_80px_90px_90px_120px] gap-3 items-center p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-white/60 dark:border-white/10 shadow-sm"
                 >
-                  <span className="text-sm font-semibold text-secondary dark:text-white truncate">{payment.invoice_number || payment.id}</span>
+                  <span
+                    dir="ltr"
+                    className={`text-sm font-semibold font-mono text-secondary dark:text-white whitespace-nowrap [unicode-bidi:isolate] ${language === 'ar' ? 'text-right' : 'text-left'}`}
+                  >
+                    {payment.invoice_number || payment.id}
+                  </span>
                   <span className="text-sm text-gray-500 truncate">
                     {payment.player ? `${payment.player.first_name || ''} ${payment.player.last_name || ''}`.trim() : '-'}
                   </span>

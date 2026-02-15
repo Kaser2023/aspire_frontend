@@ -10,6 +10,7 @@ export default function Discounts() {
   const { language } = useLanguage()
   const { user } = useAuth()
   const isBranchAdmin = user?.role === 'branch_admin'
+  const branchAdminBranchId = user?.branch_id || user?.branch?.id || ''
   const [loading, setLoading] = useState(true)
   const [discounts, setDiscounts] = useState([])
   const [pagination, setPagination] = useState({})
@@ -50,8 +51,8 @@ export default function Discounts() {
     try {
       setLoading(true)
       const params = { page, limit: 20 }
-      if (isBranchAdmin && user?.branch_id) {
-        params.branch_id = user.branch_id
+      if (isBranchAdmin && branchAdminBranchId) {
+        params.branch_id = branchAdminBranchId
       } else if (filterBranch) {
         params.branch_id = filterBranch
       }
@@ -66,12 +67,12 @@ export default function Discounts() {
     } finally {
       setLoading(false)
     }
-  }, [filterBranch, filterStatus, isBranchAdmin, page, user?.branch_id])
+  }, [branchAdminBranchId, filterBranch, filterStatus, isBranchAdmin, page])
 
   const fetchBranches = useCallback(async () => {
     if (isBranchAdmin) {
       setBranches(user?.branch ? [user.branch] : [])
-      setFilterBranch(user?.branch_id || '')
+      setFilterBranch(branchAdminBranchId)
       return
     }
     try {
@@ -82,7 +83,7 @@ export default function Discounts() {
     } catch (err) {
       console.error('Error fetching branches:', err)
     }
-  }, [isBranchAdmin, user?.branch, user?.branch_id])
+  }, [branchAdminBranchId, isBranchAdmin, user?.branch])
 
   useEffect(() => {
     fetchDiscounts()
@@ -93,10 +94,10 @@ export default function Discounts() {
   }, [fetchBranches])
 
   useEffect(() => {
-    if (isBranchAdmin && user?.branch_id) {
-      setForm(prev => ({ ...prev, branch_id: user.branch_id }))
+    if (isBranchAdmin && branchAdminBranchId) {
+      setForm(prev => ({ ...prev, branch_id: branchAdminBranchId }))
     }
-  }, [isBranchAdmin, user?.branch_id])
+  }, [branchAdminBranchId, isBranchAdmin])
 
   // Cascade: when branch changes, load programs
   useEffect(() => {
@@ -128,16 +129,24 @@ export default function Discounts() {
     }
     const loadData = async () => {
       try {
-        // Load parents
-        const parentsResponse = await usersService.getByRole('parent')
-        if (parentsResponse.success) {
-          setParents(parentsResponse.data || [])
-        }
-
-        // Always load ALL players in this branch (regardless of program)
-        const playersResponse = await playersService.getByBranch(form.branch_id)
+        // Always load ALL players in this branch (regardless of program).
+        // Parents are derived from players to avoid role-based parent-list gaps for branch admins.
+        const playersResponse = await playersService.getByBranch(form.branch_id, { limit: 500 })
         if (playersResponse.success) {
-          setPlayers(playersResponse.data || [])
+          const branchPlayers = playersResponse.data || []
+          setPlayers(branchPlayers)
+
+          const parentMap = new Map()
+          branchPlayers.forEach((player) => {
+            const parent = player?.parent
+            if (parent?.id && !parentMap.has(parent.id)) {
+              parentMap.set(parent.id, parent)
+            }
+          })
+          setParents(Array.from(parentMap.values()))
+        } else {
+          setParents([])
+          setPlayers([])
         }
       } catch (err) {
         console.error('Error loading data:', err)
@@ -157,7 +166,7 @@ export default function Discounts() {
       // No parent selected - load all players in the branch
       const loadAllPlayers = async () => {
         try {
-          const response = await playersService.getByBranch(form.branch_id)
+          const response = await playersService.getByBranch(form.branch_id, { limit: 500 })
           if (response.success) {
             setPlayers(response.data || [])
           }
@@ -170,9 +179,9 @@ export default function Discounts() {
       // Parent selected - load only their children
       const loadParentPlayers = async () => {
         try {
-          const response = await playersService.getByParent(form.user_id)
-          if (response.success) {
-            setPlayers(response.data || [])
+          const response = await playersService.getByBranch(form.branch_id, { limit: 500 })
+          if (response.success && Array.isArray(response.data)) {
+            setPlayers(response.data.filter(player => String(player.parent?.id) === String(form.user_id)))
           }
         } catch (err) {
           console.error('Error loading parent players:', err)
@@ -216,7 +225,7 @@ export default function Discounts() {
 
   const handleCreate = async (e) => {
     e.preventDefault()
-    const effectiveBranchId = isBranchAdmin ? user?.branch_id : form.branch_id
+    const effectiveBranchId = isBranchAdmin ? branchAdminBranchId : form.branch_id
     if (!effectiveBranchId || !form.discount_value) {
       setMessage({ type: 'error', text: language === 'ar' ? 'يرجى ملء الحقول المطلوبة' : 'Please fill required fields' })
       return
@@ -394,7 +403,7 @@ export default function Discounts() {
                   {language === 'ar' ? 'الفرع *' : 'Branch *'}
                 </label>
                 <select
-                  value={isBranchAdmin ? (user?.branch_id || '') : form.branch_id}
+                  value={isBranchAdmin ? branchAdminBranchId : form.branch_id}
                   onChange={(e) => setForm({ ...form, branch_id: e.target.value, program_id: '', user_id: '', player_id: '', pricing_plan_id: '' })}
                   className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
                   required
@@ -560,7 +569,7 @@ export default function Discounts() {
       <GlassCard className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 sm:items-center">
           <select
-            value={isBranchAdmin ? (user?.branch_id || '') : filterBranch}
+            value={isBranchAdmin ? branchAdminBranchId : filterBranch}
             onChange={(e) => { setFilterBranch(e.target.value); setPage(1) }}
             className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 text-gray-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={isBranchAdmin}
