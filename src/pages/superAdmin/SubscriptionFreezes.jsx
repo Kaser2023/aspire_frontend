@@ -9,6 +9,7 @@ export default function SubscriptionFreezes() {
   const { language } = useLanguage()
   const { user } = useAuth()
   const isBranchAdmin = user?.role === 'branch_admin'
+  const branchAdminBranchId = user?.branch_id || user?.branch?.id || ''
   const [loading, setLoading] = useState(true)
   const [freezes, setFreezes] = useState([])
   const [pagination, setPagination] = useState({})
@@ -67,30 +68,56 @@ export default function SubscriptionFreezes() {
 
   useEffect(() => { fetchFreezes() }, [fetchFreezes])
 
+  const fetchAllPrograms = useCallback(async (params = {}) => {
+    const pageSize = 200
+    const firstPage = await programsService.getAll({ ...params, page: 1, limit: pageSize })
+
+    if (!firstPage?.success) return []
+
+    const firstPageData = Array.isArray(firstPage.data) ? firstPage.data : []
+    const totalPages = Math.max(1, firstPage?.pagination?.totalPages || 1)
+    if (totalPages === 1) return firstPageData
+
+    const requests = []
+    for (let p = 2; p <= totalPages; p++) {
+      requests.push(programsService.getAll({ ...params, page: p, limit: pageSize }))
+    }
+    const restResponses = await Promise.all(requests)
+    const restData = restResponses.flatMap((res) =>
+      res?.success && Array.isArray(res.data) ? res.data : []
+    )
+
+    const deduped = new Map()
+    ;[...firstPageData, ...restData].forEach((program) => {
+      if (program?.id != null) deduped.set(program.id, program)
+    })
+    return Array.from(deduped.values())
+  }, [])
+
   // Load branches & programs for form
   useEffect(() => {
     const loadData = async () => {
       if (isBranchAdmin) {
         setBranches(user?.branch ? [user.branch] : [])
-        const [programRes, playersRes] = await Promise.all([
-          programsService.getAll({ branch_id: user?.branch_id, limit: 200 }),
-          playersService.getAll({ branch_id: user?.branch_id, limit: 500 })
+        const [allPrograms, playersRes] = await Promise.all([
+          fetchAllPrograms({ branch_id: branchAdminBranchId }),
+          playersService.getAll({ branch_id: branchAdminBranchId, limit: 500 })
         ])
-        if (programRes.success) setPrograms(programRes.data || [])
+        setPrograms(allPrograms)
         if (playersRes.success) setPlayers(playersRes.data || [])
         return
       }
       try {
-        const [branchRes, programRes, playersRes] = await Promise.allSettled([
+        const [branchRes, allPrograms, playersRes] = await Promise.allSettled([
           branchesService.getAll(),
-          programsService.getAll(),
+          fetchAllPrograms(),
           playersService.getAll({ limit: 1000 })
         ])
         if (branchRes.status === 'fulfilled' && branchRes.value?.success) {
           setBranches(branchRes.value.data || [])
         }
-        if (programRes.status === 'fulfilled' && programRes.value?.success) {
-          setPrograms(programRes.value.data || [])
+        if (allPrograms.status === 'fulfilled') {
+          setPrograms(allPrograms.value || [])
         }
         if (playersRes.status === 'fulfilled' && playersRes.value?.success) {
           setPlayers(playersRes.value.data || [])
@@ -103,20 +130,20 @@ export default function SubscriptionFreezes() {
       }
     }
     if (showForm) loadData()
-  }, [isBranchAdmin, showForm, user?.branch])
+  }, [branchAdminBranchId, fetchAllPrograms, isBranchAdmin, showForm, user?.branch, user?.branch_id])
 
   useEffect(() => {
-    if (isBranchAdmin && user?.branch_id) {
+    if (isBranchAdmin && branchAdminBranchId) {
       setForm(prev => ({
         ...prev,
         scope: 'branch',
-        branch_id: user.branch_id,
+        branch_id: branchAdminBranchId,
         program_id: '',
         player_id: ''
       }))
       setFilterScope('')
     }
-  }, [isBranchAdmin, user?.branch_id])
+  }, [branchAdminBranchId, isBranchAdmin])
 
   // Calculate freeze days
   const freezeDays = form.start_date && form.end_date
